@@ -1,0 +1,67 @@
+name: Build & release APK
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["docs/**", "**.md"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+
+      - name: Build release APK
+        run: |
+          set -o pipefail
+          gradle assembleRelease --no-daemon --stacktrace 2>&1 | tee build.log
+
+      - name: Read version
+        id: version
+        run: echo "name=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)" >> "$GITHUB_OUTPUT"
+
+      - name: Rename APK
+        run: cp app/build/outputs/apk/release/app-release.apk mindful-launcher.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mindful-launcher
+          path: mindful-launcher.apk
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.name }}
+          name: Mindful Launcher v${{ steps.version.outputs.name }}
+          make_latest: true
+          files: mindful-launcher.apk
+          body: |
+            Download `mindful-launcher.apk` below and open it on your Android phone (Android 8.0+).
+            You may need to allow "Install unknown apps" for your browser or file manager.
+            After installing, open Mindful → hold the home screen → Settings → "Set Mindful as your home app".
+
+      - name: Save build log on failure
+        if: failure()
+        run: |
+          cp build.log /tmp/build.log 2>/dev/null || echo "no build log" > /tmp/build.log
+          git config user.name "ci"
+          git config user.email "ci@users.noreply.github.com"
+          git checkout --orphan ci-log
+          git rm -rf . -q
+          cp /tmp/build.log build.log
+          git add build.log
+          git commit -q -m "CI build log for ${GITHUB_SHA}"
+          git push -f origin ci-log

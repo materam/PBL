@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mindful Launcher</title>
+<meta name="description" content="A free, text-only Android launcher that makes you pause and write down why before a distracting app opens.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 108 108'%3E%3Crect width='108' height='108' rx='24' fill='%231d211b'/%3E%3Ccircle cx='54' cy='54' r='22' fill='none' stroke='%23e3e6dd' stroke-width='3.5'/%3E%3Crect x='49' y='47' width='3.5' height='14' fill='%23e3e6dd'/%3E%3Crect x='55.5' y='47' width='3.5' height='14' fill='%23e3e6dd'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Newsreader:opsz,wght@6..72,300;6..72,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --stone: #e3e6dd;
+    --stone-deep: #d4d8cc;
+    --ink: #1d211b;
+    --moss: #56624f;
+    --sage: #8ea487;
+    --glass: #050605;
+    --screen-fg: #ecefe8;
+    --screen-muted: #7f857b;
+    --measure: 36rem;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--stone);
+    color: var(--ink);
+    font: 400 1.0625rem/1.6 "Atkinson Hyperlegible", system-ui, sans-serif;
+  }
+  a { color: inherit; text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
+  a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visible {
+    outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 4px;
+  }
+  .wrap { max-width: 68rem; margin: 0 auto; padding: 0 1.5rem; }
+
+  header.top {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 1.75rem 0;
+  }
+  .wordmark { font: 400 1.35rem/1 "Newsreader", serif; text-decoration: none; }
+  .top nav a { margin-left: 1.5rem; color: var(--moss); text-decoration: none; }
+  .top nav a:hover { color: var(--ink); text-decoration: underline; }
+
+  /* Hero */
+  .hero {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4rem;
+    align-items: center; padding: 3rem 0 6rem;
+  }
+  h1, h2 { font-family: "Newsreader", serif; font-weight: 300; letter-spacing: -0.015em; }
+  h1 { font-size: clamp(2.75rem, 7vw, 5.25rem); line-height: 1.02; margin: 0 0 1.75rem; max-width: 11ch; }
+  .lede { font-size: 1.2rem; max-width: var(--measure); margin: 0 0 2.25rem; color: #2f352c; }
+  .actions { display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; align-items: center; }
+  .btn {
+    display: inline-block; padding: 0.95rem 1.6rem; border-radius: 999px;
+    background: var(--ink); color: var(--stone); text-decoration: none; font-weight: 700;
+  }
+  .btn:hover { background: #000; }
+  .small { font-size: 0.9rem; color: var(--moss); margin-top: 1rem; }
+
+  /* Phone */
+  .phone {
+    width: 18.5rem; aspect-ratio: 9 / 19.2; background: var(--glass); border-radius: 2.6rem;
+    padding: 2.4rem 1.6rem 1.6rem; color: var(--screen-fg); position: relative;
+    box-shadow: 0 0 0 0.55rem #2b2f29, 0 2.5rem 4rem -1.5rem rgba(29, 33, 27, 0.45);
+    display: flex; flex-direction: column; font-family: "Atkinson Hyperlegible", sans-serif;
+  }
+  .phone::before {
+    content: ""; position: absolute; top: 0.9rem; left: 50%; width: 4.5rem; height: 1.1rem;
+    transform: translateX(-50%); background: #000; border-radius: 1rem;
+  }
+  .ring-wrap { display: grid; place-items: center; height: 9.5rem; margin-top: 0.5rem; }
+  .ring {
+    grid-area: 1 / 1; width: 7.5rem; height: 7.5rem; border-radius: 50%;
+    border: 1px solid #3a4037; background: radial-gradient(circle, rgba(142,164,135,0.22), rgba(142,164,135,0) 70%);
+    animation: breathe 8s ease-in-out infinite;
+  }
+  .count { grid-area: 1 / 1; font: 300 3.25rem/1 "Newsreader", serif; }
+  @keyframes breathe { 0%, 100% { transform: scale(0.72); } 50% { transform: scale(1); } }
+  .breath { text-align: center; color: var(--screen-muted); font-size: 0.8rem; margin: 0.25rem 0 1.4rem; min-height: 1.2em; }
+  .q { font: 400 1.35rem/1.25 "Newsreader", serif; margin: 0 0 0.4rem; }
+  .meta { color: var(--screen-muted); font-size: 0.78rem; margin: 0 0 1rem; }
+  .field {
+    border-bottom: 1px solid #3a4037; padding: 0.4rem 0; font-size: 0.95rem; min-height: 2rem;
+    color: var(--screen-fg);
+  }
+  .field .caret { display: inline-block; width: 1px; height: 1em; background: var(--screen-fg); vertical-align: -0.12em; animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .chips { display: flex; gap: 0.35rem; margin: 1.1rem 0; }
+  .chips span { flex: 1; text-align: center; border: 1px solid #3a4037; border-radius: 99px; padding: 0.35rem 0; font-size: 0.72rem; }
+  .chips span.on { background: var(--screen-fg); color: var(--glass); border-color: var(--screen-fg); }
+  .open {
+    margin-top: auto; text-align: center; border-radius: 99px; padding: 0.7rem; font-size: 0.82rem;
+    background: var(--screen-fg); color: var(--glass); opacity: 0.35; transition: opacity 0.4s;
+  }
+  .open.ready { opacity: 1; }
+  .home-btn { text-align: center; border: 1px solid #3a4037; border-radius: 99px; padding: 0.7rem; font-size: 0.82rem; margin-top: 0.5rem; }
+
+  /* Sections */
+  section.block { padding: 5rem 0; border-top: 1px solid var(--stone-deep); }
+  .split { display: grid; grid-template-columns: 16rem minmax(0, 1fr); gap: 3rem; }
+  h2 { font-size: clamp(1.9rem, 3.6vw, 2.6rem); line-height: 1.1; margin: 0; }
+  .split > div > p:first-child { margin-top: 0; }
+  .prose { max-width: var(--measure); }
+
+  ol.steps { list-style: none; counter-reset: s; padding: 0; margin: 0; max-width: var(--measure); }
+  ol.steps li { counter-increment: s; display: grid; grid-template-columns: 2.5rem 1fr; padding: 0 0 1.6rem; }
+  ol.steps li::before { content: counter(s); font: 300 1.6rem/1.2 "Newsreader", serif; color: var(--moss); }
+  ol.steps strong { display: block; font-weight: 700; }
+
+  /* The feature list mirrors the launcher's own home screen: plain words, nothing else. */
+  .wordlist { margin: 0; padding: 0; list-style: none; max-width: var(--measure); }
+  .wordlist li { padding: 0.9rem 0; border-bottom: 1px solid var(--stone-deep); }
+  .wordlist li:first-child { padding-top: 0; }
+  .wordlist b { display: block; font: 400 1.55rem/1.2 "Newsreader", serif; margin-bottom: 0.15rem; }
+  .wordlist span { color: #3d4439; }
+
+  .promise { font: 300 clamp(2rem, 4.5vw, 3.4rem)/1.12 "Newsreader", serif; max-width: 20ch; margin: 0 0 1.5rem; letter-spacing: -0.015em; }
+
+  details { border-bottom: 1px solid var(--stone-deep); padding: 1.1rem 0; max-width: var(--measure); }
+  details:first-of-type { padding-top: 0; }
+  summary { cursor: pointer; font-weight: 700; list-style: none; display: flex; justify-content: space-between; gap: 1rem; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; font-weight: 400; color: var(--moss); }
+  details[open] summary::after { content: "–"; }
+  details p { margin: 0.6rem 0 0; color: #3d4439; }
+
+  footer { padding: 3rem 0 4rem; border-top: 1px solid var(--stone-deep); color: var(--moss); font-size: 0.92rem; }
+  footer p { margin: 0.3rem 0; }
+
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: 1fr; gap: 3.5rem; padding-top: 1.5rem; }
+    .phone { margin: 0 auto; }
+    .split { grid-template-columns: 1fr; gap: 1.5rem; }
+    section.block { padding: 3.5rem 0; }
+    .top nav a:not(:last-child) { display: none; }
+  }
+  @media (max-width: 380px) {
+    .phone { width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ring, .field .caret { animation: none; }
+    .open { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="wordmark" href="#">Mindful</a>
+    <nav aria-label="Page">
+      <a href="#how">How it works</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/materam/PBL">GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="hero">
+      <div>
+        <h1>A home screen that asks why.</h1>
+        <p class="lede">Mindful is a free Android launcher. Your apps become plain words, and before a distracting app opens, it asks you to wait a few seconds and write down why you're opening it.</p>
+        <div class="actions">
+          <a class="btn" href="https://github.com/materam/PBL/releases/latest/download/mindful-launcher.apk">Download for Android</a>
+          <a href="https://github.com/materam/PBL">Read the source code</a>
+        </div>
+        <p class="small">Free and open source. Works on Android 8.0 or newer.</p>
+      </div>
+
+      <div class="phone" role="img" aria-label="The Mindful pause screen counting down before Instagram opens, asking why you are opening it">
+        <div class="ring-wrap" aria-hidden="true">
+          <div class="ring"></div>
+          <div class="count" id="count">10</div>
+        </div>
+        <p class="breath" id="breath" aria-hidden="true">breathe in…</p>
+        <p class="q">Why are you opening Instagram?</p>
+        <p class="meta">Opened 4 times today.</p>
+        <div class="field"><span id="typed"></span><span class="caret"></span></div>
+        <div class="chips"><span>5 min</span><span class="on">10 min</span><span>15 min</span><span>30 min</span></div>
+        <div class="open" id="open">take a moment</div>
+        <div class="home-btn">never mind, take me home</div>
+      </div>
+    </div>
+
+    <section class="block" id="how">
+      <div class="split">
+        <h2>What happens when you tap Instagram</h2>
+        <div>
+          <ol class="steps">
+            <li><div><strong>You wait ten seconds.</strong>A slow breathing circle counts down. Often that is enough to notice you were opening it out of habit.</div></li>
+            <li><div><strong>You write your reason.</strong>“Reply to Riya's message” is a reason. The button stays locked until you write one.</div></li>
+            <li><div><strong>You choose how long.</strong>Pick 5, 10, 15 or 30 minutes before the app opens.</div></li>
+            <li><div><strong>Mindful reminds you when time is up.</strong>A quiet notification tells you the session is over and offers a way back home.</div></li>
+          </ol>
+          <p class="prose">You decide which apps get a pause. Everything else opens instantly, so calling, maps and banking never slow you down.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="split">
+        <h2>Everything else is quiet on purpose</h2>
+        <ul class="wordlist">
+          <li><b>Seven words on your home screen</b><span>Up to seven apps, as text. A clock and the date. No icons, badges or colours pulling at you.</span></li>
+          <li><b>Search first, scroll last</b><span>Swipe up and start typing. Press enter to open the top result.</span></li>
+          <li><b>Focus hours</b><span>Set quiet hours, like 10 pm to 7 am. Paused apps then ask you to wait thirty seconds instead of ten.</span></li>
+          <li><b>Your reasons, written down</b><span>Every reason you type is kept in a log, so you can look back at why you actually reach for your phone.</span></li>
+          <li><b>Hide what you don't need</b><span>Remove apps from the list without uninstalling them.</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="split">
+        <h2>Privacy</h2>
+        <div>
+          <p class="promise">Mindful can't send your data anywhere. It has no internet permission.</p>
+          <p class="prose">Your app list, your reasons and your daily counts are stored only on your phone. There are no accounts, ads or analytics. Uninstalling Mindful deletes all of it.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="install">
+      <div class="split">
+        <h2>Install it in two minutes</h2>
+        <ol class="steps">
+          <li><div><strong>Download the APK on your phone.</strong><a href="https://github.com/materam/PBL/releases/latest/download/mindful-launcher.apk">mindful-launcher.apk</a> from the latest release.</div></li>
+          <li><div><strong>Allow the install.</strong>Android will ask you to allow installs from your browser or file manager. Allow it once.</div></li>
+          <li><div><strong>Open Mindful.</strong>Swipe up to see your apps. Hold an app to add it to your home screen or turn on its pause.</div></li>
+          <li><div><strong>Make it your home screen.</strong>Hold an empty part of the home screen, open Settings, and choose “Set Mindful as your home app”.</div></li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="split">
+        <h2>Questions</h2>
+        <div>
+          <details>
+            <summary>Is it free?</summary>
+            <p>Yes. Mindful is free and its code is open source under the MIT licence.</p>
+          </details>
+          <details>
+            <summary>Why isn't it on the Play Store yet?</summary>
+            <p>It's an early release. For now you install it from GitHub. A Play Store version is planned.</p>
+          </details>
+          <details>
+            <summary>Can I go back to my old home screen?</summary>
+            <p>Yes. Open your phone's Settings, search for “Default apps”, and pick your old launcher under Home app.</p>
+          </details>
+          <details>
+            <summary>Does it work on iPhone?</summary>
+            <p>No. iOS doesn't allow third-party home screens, so Mindful is Android only.</p>
+          </details>
+          <details>
+            <summary>Can I skip the pause?</summary>
+            <p>You can always tap “never mind, take me home”. To open the app, you wait and write a reason. That small effort is the point.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Mindful Launcher is built by Saksham at Sikkim Manipal Institute of Technology.</p>
+    <p><a href="https://github.com/materam/PBL">Source code on GitHub</a>. Released under the MIT licence.</p>
+  </footer>
+</div>
+
+<script>
+  (function () {
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var count = document.getElementById("count");
+    var breath = document.getElementById("breath");
+    var typed = document.getElementById("typed");
+    var open = document.getElementById("open");
+    var reason = "reply to Riya's message";
+
+    if (reduce) {
+      count.textContent = "·";
+      breath.textContent = "still want to?";
+      typed.textContent = reason;
+      open.textContent = "open Instagram for 10 min";
+      open.classList.add("ready");
+      return;
+    }
+
+    function cycle() {
+      var n = 10;
+      typed.textContent = "";
+      open.textContent = "take a moment";
+      open.classList.remove("ready");
+      count.textContent = n;
+      var tick = setInterval(function () {
+        n -= 1;
+        breath.textContent = (n % 8 >= 4) ? "breathe in…" : "breathe out…";
+        if (n > 0) { count.textContent = n; return; }
+        clearInterval(tick);
+        count.textContent = "·";
+        breath.textContent = "still want to?";
+        open.textContent = "write your reason to continue";
+        var i = 0;
+        var type = setInterval(function () {
+          i += 1;
+          typed.textContent = reason.slice(0, i);
+          if (i >= reason.length) {
+            clearInterval(type);
+            open.textContent = "open Instagram for 10 min";
+            open.classList.add("ready");
+            setTimeout(cycle, 4000);
+          }
+        }, 85);
+      }, 1000);
+    }
+    cycle();
+  })();
+</script>
+</body>
+</html>
