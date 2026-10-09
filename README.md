@@ -80,4 +80,4 @@ Mindful started as a Project-Based Learning (PBL) project at Sikkim Manipal Inst
 
 ## License
 
-[MIT](LICENSE) © 2026 Saksham
+[MIT](LICENSE) © 2026 Anmol Pradhan
